@@ -28,9 +28,17 @@ def model_load(offset, num_scale):
     return model, nms_max
 
 
-# get model
+# general
 st.set_page_config(layout="wide")
 os.environ["CUDA_VISIBLE_DEVICES"] = '0'
+
+# download model
+model_path = "data/models/net_e32_l0.0814104549587.hdf5"
+if not os.path.exists(model_path):
+    with st.spinner('Downloading Model ...'):
+        os.system("bash data/models/download_model.sh")
+
+# get model
 C = config.Config()
 C.offset, C.scale, C.num_scale, C.down, C.size_test = False, 'h', 1, 1, [0, 0]
 model, nms_max = model_load(C.offset, C.num_scale)
@@ -192,8 +200,8 @@ def main():
     col1, col2, col3, col4 = st.columns(4)
     fps = col1.slider('FPS Output for Video', 1, 20, 5, 1)
     color = col2.color_picker('Bounding Box Color', '#FF0900')
-    text_color = col3.color_picker('Count Text Color', '#ffffff')
-    bg_color = col4.color_picker('Count Background Color', '#000000')
+    text_color = col3.color_picker('Count Text Color', '#000000')
+    bg_color = col4.color_picker('Count Background Color', '#ffffff')
 
     # menu
     upload = st.file_uploader('Upload Images/Video', type=['jpg', 'jpeg', 'png', 'gif', 'avi', 'mp4'])
@@ -205,7 +213,7 @@ def main():
         if filetype in ['jpg', 'jpeg', 'png']:
             image_bytes = Image.open(upload).convert('RGB')
             image = np.array(image_bytes)  # if you want to pass it to OpenCV
-            with st.spinner('Please Wait ...'):
+            with st.spinner('Detecting and Counting ...'):
                 output_image = run(image, rgb_color, text_color, bg_color)
             output_image_bytes = Image.fromarray(np.uint8(output_image))
             st.image(output_image_bytes, use_column_width=True)
