@@ -6,13 +6,13 @@ import numpy as np
 from PIL import Image
 import streamlit as st
 from model import SASNet
-from utils import draw_bbox, get_image_download_link, transform_images, hex_to_rgb, dotdict
+from utils import pred_map_overlay, get_image_download_link, transform_images, hex_to_rgb, dotdict
 
 # setttings
 args = dotdict({'block_size': 32, 'batch_size': 4, 'log_para': 1000, 'model_path': "models/SHHA.pth"})
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
-st.set_page_config()
+os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 warnings.filterwarnings('ignore')
+st.set_page_config()
 
 
 @st.cache(show_spinner=False)
@@ -26,22 +26,21 @@ def load_model(args):
         return model
 
 
-model = load_model(args)
-
-
 def run(img, rgb_color, text_color, bg_color):
 
     # get model/data
+    model = load_model(args)
     image = transform_images(img)
 
     # run
-    pred = model(image)
-    pred_map = pred.cpu().detach().numpy()
-    pred_count = np.sum(pred_map[0]) / args.log_para
+    with torch.no_grad():
+        model.eval()
+        pred = model(image)
+        pred_map = pred.cpu().detach().numpy()
+        pred_count = np.sum(pred_map[0]) / args.log_para
 
     # draw bbox
-    output_image = draw_bbox(pred_map, pred_count, rgb_color, text_color, bg_color)
-    print('The predicted count is:', np.ceil(pred_count))
+    output_image = pred_map_overlay(pred, pred_count, rgb_color, text_color, bg_color)
 
     return output_image
 
@@ -63,25 +62,24 @@ def main():
                 Check it out for yourself below!", unsafe_allow_html=True)
 
     # make columns for st
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3 = st.columns(3)
     fps = col1.slider('FPS Output for Video', 1, 20, 5, 1)
-    color = col2.color_picker('Bounding Box Color', '#FF0900')
-    text_color = col3.color_picker('Count Text Color', '#000000')
-    bg_color = col4.color_picker('Count Background Color', '#ffffff')
+    text_color = col2.color_picker('Count Text Color', '#000000')
+    bg_color = col3.color_picker('Count Background Color', '#ffffff')
 
     # menu
     upload = st.file_uploader('Upload Images/Video', type=['jpg', 'jpeg', 'png', 'gif', 'avi', 'mp4'])
 
     if upload is not None:
         filetype = upload.name.split('.')[-1]
-        rgb_color, text_color, bg_color = hex_to_rgb(color), hex_to_rgb(text_color), hex_to_rgb(bg_color)
+        rgb_color, text_color, bg_color = None, hex_to_rgb(text_color), hex_to_rgb(bg_color)
 
         if filetype in ['jpg', 'jpeg', 'png']:
-            image_bytes = Image.open(upload).convert('RGB')
-            image = np.array(image_bytes)  # if you want to pass it to OpenCV
             with st.spinner('Detecting and Counting ...'):
+                image_bytes = Image.open(upload).convert('RGB')
+                image = np.array(image_bytes)
                 output_image = run(image, rgb_color, text_color, bg_color)
-            output_image_bytes = Image.fromarray(np.uint8(output_image))
+                output_image_bytes = Image.fromarray(np.uint8(output_image))
             st.image(output_image_bytes, use_column_width=True)
             st.markdown(get_image_download_link(output_image_bytes, 'crowd_counter.png', 'Download'), unsafe_allow_html=True)
 
@@ -94,4 +92,5 @@ def main():
 
 
 if __name__ == '__main__':
+    model = load_model(args)
     main()

@@ -14,9 +14,8 @@ def transform_images(image):
         [standard_transforms.ToTensor(),
          standard_transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                        std=[0.229, 0.224, 0.225]), ])
-
     img = Image.fromarray(image).convert('RGB')
-    img = torch.Tensor(transform(img))
+    img = torch.Tensor(transform(img)).unsqueeze(0)
     return img
 
 
@@ -28,31 +27,15 @@ def get_image_download_link(img, filename, text):
     return href
 
 
-def draw_bbox(img, pred_map, pred_cnt, rgb_color, text_color, bg_color):
-
-    image = img.copy()
-
-    text_thickness = 2
-    font_face = cv2.FONT_HERSHEY_SIMPLEX
-    font_scale = 0.75
-
-    bboxes = np.array(dets, dtype='float32')
-    bboxes = bboxes[bboxes[:, 4] > thr]
-    bboxes = np.array([[x[0], x[1], x[2] - x[0] + 1, x[3] - x[1] + 1, x[4]] for x in bboxes])
-
-    for i in range(bboxes.shape[0]):
-        x1, y1 = int(bboxes[i, 0]), int(bboxes[i, 1])
-        x2, y2 = x1 + int(bboxes[i, 2]), y1 + int(bboxes[i, 3])
-        cv2.rectangle(image, (x1, y1), (x2, y2), rgb_color, 2)
-
-    # add the text
-    text = str(int(num_dets))
-    size = cv2.getTextSize(text, font_face, font_scale, text_thickness)
-    x, y = 50, 50
-    cv2.rectangle(image, (x, y - size[0][1] - size[1]), (x + size[0][0], y + size[0][1] - size[1]), bg_color, cv2.FILLED)
-    cv2.putText(image, text, (x, y), font_face, font_scale, text_color, text_thickness)
-
-    return image
+def pred_map_overlay(pred_map, pred_cnt, rgb_color, text_color, bg_color):
+    density_map = cv2.normalize(pred_map.detach().numpy()[0, 0, :, :], None, 0, 255, cv2.NORM_MINMAX)
+    density_map = cv2.cvtColor(density_map, cv2.COLOR_GRAY2RGB)
+    text = str(int(pred_cnt))
+    size = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 1.5, 2)
+    x, y = 75, 75
+    cv2.rectangle(density_map, (x, y - size[0][1] - size[1]), (x + size[0][0], y + size[0][1] - size[1]), bg_color, cv2.FILLED)
+    cv2.putText(density_map, text, (x, y), cv2.FONT_HERSHEY_SIMPLEX, 1.5, text_color, 2)
+    return density_map
 
 
 def hex_to_rgb(hx, hsl=False):
