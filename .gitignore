@@ -1,3 +1,5 @@
 __pycache__/
 net_e32_l0.0814104549587.hdf5
 data/models/net_e32_l0.0814104549587.hdf5
+models\SHHA.pth
+SHHA.pth
