@@ -18,7 +18,7 @@ warnings.filterwarnings('ignore')
 def load_model(args):
     if not os.path.exists(args.model_path):
         with st.spinner('Downloading Model ...'):
-            os.system("bash data/models/download_model.sh")
+            os.system("bash models/download_model.sh")
     with st.spinner('Getting Neruons in Order ...'):
         model = SASNet(args=args)
         model.load_state_dict(torch.load(args.model_path, map_location=torch.device('cpu')))
