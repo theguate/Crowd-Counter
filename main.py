@@ -1,5 +1,6 @@
 import os
 import torch
+import gdown
 import warnings
 import numpy as np
 from PIL import Image
@@ -18,7 +19,7 @@ warnings.filterwarnings('ignore')
 def load_model(args):
     if not os.path.exists(args.model_path):
         with st.spinner('Downloading Model ...'):
-            os.system("bash models/download_model.sh")
+            gdown.download("https://drive.google.com/uc?id={}".format("1d4oOXdWr0e0tp47Fz9Jl7xu5vAvyz7BF"), output=args.model_path)
     with st.spinner('Getting Neruons in Order ...'):
         model = SASNet(args=args)
         model.load_state_dict(torch.load(args.model_path, map_location=torch.device('cpu')))
