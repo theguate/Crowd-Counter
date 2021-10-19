@@ -94,8 +94,6 @@ PySocks==1.7.1
 python-dateutil==2.8.1
 pytz==2021.3
 PyWavelets==1.1.1
-pywin32==302
-pywinpty==1.1.4
 PyYAML==5.4.1
 pyzmq==22.3.0
 requests==2.25.1
@@ -108,12 +106,6 @@ six==1.15.0
 sk-video==1.1.10
 smmap==4.0.0
 streamlit==1.0.0
-tensorboard==1.14.0
-tensorboard-data-server==0.6.1
-tensorboard-plugin-wit==1.8.0
-tensorflow==1.14.0
-tensorflow-addons==0.13.0
-tensorflow-estimator==1.14.0
 termcolor==1.1.0
 terminado==0.12.1
 testpath==0.5.0
